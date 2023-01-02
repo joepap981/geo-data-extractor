@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.0.1'
+    id 'io.spring.dependency-management' version '1.1.0'
+}
+
+group = 'com.joepap'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    maven { url "https://repo.osgeo.org/repository/release/"}
+    maven { url "https://repo.spring.io/milestone"}
+    jcenter()
+}
+
+ext {
+    set('springShellVersion', "3.0.0-M3")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.shell:spring-shell-starter'
+
+    implementation 'org.geotools:gt-main:27.2'
+    implementation 'org.geotools:gt-shapefile:27.2'
+    implementation 'com.google.collections:google-collections:1.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.shell:spring-shell-dependencies:${springShellVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
