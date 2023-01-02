@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.joepap.geodataextractor.adapter.dto.CategoryGroupCode;
 
-class KakaoLocalServiceTest {
+class OptimalZoneSizeCalculationServiceTest {
 
     @Test
     void test() {

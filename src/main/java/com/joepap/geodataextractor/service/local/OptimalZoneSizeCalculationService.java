@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.joepap.geodataextractor.Constants;
 import com.joepap.geodataextractor.adapter.KakaoLocalAdapter;
 import com.joepap.geodataextractor.adapter.dto.CategoryGroupCode;
 import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchRequestDto;
@@ -21,38 +22,29 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class KakaoLocalService {
+public class OptimalZoneSizeCalculationService {
 
     private final KakaoLocalAdapter kakaoLocalAdapter;
 
-    private static final String API_KEY = "623024008f5c92b8c7bcea8339b38a24";
-    private static final int MAX_PAGE_SIZE = 15;
-    private static final int MAX_TOTAL_PAGE = 45;
 
-    private static final double SEOUL_MIN_LONGITUDE = 126.7630;
-    private static final double SEOUL_MAX_LATITUDE = 37.7020;
-    private static final double SEOUL_MAX_LONGITUDE = 127.0520;
-    private static final double SEOUL_MIN_LATITUDE = 37.4280;
-
-
-    @PostConstruct
     public Map<CategoryGroupCode, OptimalZoneConditionVo> getOptimalZoneConditionMap() {
 
         final Map<CategoryGroupCode, OptimalZoneConditionVo> conditionVoMap =
                 new EnumMap<>(CategoryGroupCode.class);
 
-        for (CategoryGroupCode categoryGroupCode : CategoryGroupCode.values()) {
-            conditionVoMap.put(categoryGroupCode, getOptimalZoneCondition(categoryGroupCode));
-        }
+//        for (CategoryGroupCode categoryGroupCode : CategoryGroupCode.values()) {
+//            conditionVoMap.put(categoryGroupCode, getOptimalZoneCondition(categoryGroupCode));
+//        }
+        conditionVoMap.put(CategoryGroupCode.MT1, getOptimalZoneCondition(CategoryGroupCode.MT1));
 
         log.info("Map: {}", conditionVoMap);
         return conditionVoMap;
     }
 
-    public OptimalZoneConditionVo getOptimalZoneCondition(CategoryGroupCode categoryGroupCode) {
+    private OptimalZoneConditionVo getOptimalZoneCondition(CategoryGroupCode categoryGroupCode) {
         final double minimumDegree = 0.0001;
-        double currentLonDegree = SEOUL_MAX_LONGITUDE - SEOUL_MIN_LONGITUDE;
-        double currentLatDegree = SEOUL_MAX_LATITUDE - SEOUL_MIN_LATITUDE;
+        double currentLonDegree = Constants.SEOUL_MAX_LONGITUDE - Constants.SEOUL_MIN_LONGITUDE;
+        double currentLatDegree = Constants.SEOUL_MAX_LATITUDE - Constants.SEOUL_MIN_LATITUDE;
         int divideCount = 1;
 
         while (currentLonDegree > minimumDegree) {
@@ -71,19 +63,19 @@ public class KakaoLocalService {
         return new OptimalZoneConditionVo(currentLonDegree, currentLatDegree);
     }
     
-    public boolean checkDataIncludedForZones(
+    private boolean checkDataIncludedForZones(
             CategoryGroupCode categoryGroupCode, double lonDegree, double latDegree) {
         int count = 0;
-        double startLongitude = SEOUL_MIN_LONGITUDE;
+        double startLongitude = Constants.SEOUL_MIN_LONGITUDE;
         double endLongitude = startLongitude + lonDegree;
         while (true) {
-            double startLatitude = SEOUL_MIN_LATITUDE;
+            double startLatitude = Constants.SEOUL_MIN_LATITUDE;
             double endLatitude = startLatitude + latDegree;
 
             while (true) {
                 final RectangleBuilderVo searchRectangle = RectangleBuilderVo.of(
-                        new Point(startLongitude, startLatitude),
-                        new Point(endLongitude, endLatitude)
+                        new Point(startLongitude, endLatitude),
+                        new Point(endLongitude, startLatitude)
                 );
 
                 log.info("{}", searchRectangle);
@@ -91,25 +83,25 @@ public class KakaoLocalService {
                     return false;
                 }
 
-                if (Double.compare(endLatitude, SEOUL_MAX_LATITUDE) == 0) {
+                if (Double.compare(endLatitude, Constants.SEOUL_MAX_LATITUDE) == 0) {
                     break;
                 }
 
                 startLatitude = endLatitude;
                 endLatitude += latDegree;
-                if (endLatitude > SEOUL_MAX_LATITUDE) {
-                    endLatitude = SEOUL_MAX_LATITUDE;
+                if (endLatitude > Constants.SEOUL_MAX_LATITUDE) {
+                    endLatitude = Constants.SEOUL_MAX_LATITUDE;
                 }
                 count++;
             }
             
-            if (Double.compare(endLongitude, SEOUL_MAX_LONGITUDE) == 0) {
+            if (Double.compare(endLongitude, Constants.SEOUL_MAX_LONGITUDE) == 0) {
                 break;
             }
             startLongitude = endLongitude;
             endLongitude += lonDegree;
-            if (endLongitude > SEOUL_MAX_LONGITUDE) {
-                endLongitude = SEOUL_MAX_LONGITUDE;
+            if (endLongitude > Constants.SEOUL_MAX_LONGITUDE) {
+                endLongitude = Constants.SEOUL_MAX_LONGITUDE;
             }
         }
 
@@ -120,9 +112,9 @@ public class KakaoLocalService {
     private boolean isAllDataIncluded(
             CategoryGroupCode categoryGroupCode, RectangleBuilderVo rectangleBuilderVo) {
         final LocalCategorySearchRequestDto requestDto = LocalCategorySearchRequestDto.from(
-                categoryGroupCode, rectangleBuilderVo, 45, MAX_PAGE_SIZE);
+                categoryGroupCode, rectangleBuilderVo, Constants.MAX_TOTAL_PAGE, Constants.MAX_PAGE_SIZE);
         final LocalCategorySearchResponseDto responseDto =
-                kakaoLocalAdapter.searchLocalByCategory(API_KEY, requestDto);
+                kakaoLocalAdapter.searchLocalByCategory(Constants.API_KEY, requestDto);
         final LocalMetaDto meta = responseDto.getMeta();
         return meta.isAbleToSearchAllData();
     }
