@@ -33,7 +33,6 @@ dependencies {
     implementation 'com.google.collections:google-collections:1.0'
     implementation 'org.apache.commons:commons-csv:1.9.0'
 
-
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'

@@ -23,17 +23,16 @@ public class GeoDataRetrieveService {
 
     private final KakaoLocalAdapter kakaoLocalAdapter;
 
-    public List<LocalDocumentDto> retrieveAllLocalDocuments(
+    public List<LocalDocumentDto> retrieveRestOfLocalDocuments(
             CategoryGroupCode categoryGroupCode, RectangleBuilderVo rectangleBuilderVo) {
-
         final List<LocalDocumentDto> localDocuments = Lists.newArrayList();
-        for (int i = 1; i <= Constants.MAX_TOTAL_PAGE; i++) {
+        for (int i = 2; i <= Constants.MAX_TOTAL_PAGE; i++) {
             final LocalCategorySearchResponseDto responseDto = kakaoLocalAdapter.searchLocalByCategory(
-                    Constants.API_KEY, LocalCategorySearchRequestDto.from(
+                    KeyStorage.get(), LocalCategorySearchRequestDto.from(
                             categoryGroupCode, rectangleBuilderVo, i, Constants.MAX_PAGE_SIZE));
 
             localDocuments.addAll(responseDto.getDocuments());
-            if (responseDto.getMeta().getIsEnd()) {
+            if (responseDto.getMeta().isEnd()) {
                 break;
             }
         }

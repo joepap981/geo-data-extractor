@@ -1,7 +1,11 @@
 package com.joepap.geodataextractor.service.local.vo;
 
+import java.util.List;
+
+import org.apache.commons.csv.CSVFormat;
 import org.apache.logging.log4j.util.Strings;
 
+import com.google.common.collect.Lists;
 import com.joepap.geodataextractor.adapter.dto.LocalDocumentDto;
 
 import lombok.AccessLevel;
@@ -28,7 +32,29 @@ public class GeoDataVo {
     private String subCategory4;
 
     private static final String CATEGORY_NAME_DELIMITER = ">";
-    public static final String HEADERS = "";
+    private static final String[] HEADERS = {
+            "id",
+            "categoryGroupCode",
+            "categoryGroupName",
+            "placeName",
+            "city",
+            "address",
+            "roadAddress",
+            "administrativeRegionName",
+            "administrativeRegionCode",
+            "longitude",
+            "latitude",
+            "subCategory1",
+            "subCategory2",
+            "subCategory3",
+            "subCategory4"
+    };
+
+    public static CSVFormat getCsvFormat() {
+        final CSVFormat.Builder builder = CSVFormat.DEFAULT.builder();
+        builder.setHeader(HEADERS);
+        return builder.build();
+    }
 
     public static GeoDataVo from(LocalDocumentDto localDocumentDto) {
         final String[] subCategories = new String[4];
@@ -45,7 +71,7 @@ public class GeoDataVo {
                 .categoryGroupName(localDocumentDto.getCategoryGroupCode().getCategoryName())
                 .categoryGroupCode(localDocumentDto.getCategoryGroupCode().getCode())
                 .placeName(localDocumentDto.getPlaceName())
-                .city(address != null ? address.split(" ")[0] : null)
+                .city(address != null ? address.split(" ")[0] : Strings.EMPTY)
                 .address(address)
                 .roadAddress(localDocumentDto.getRoadAddressName())
                 .administrativeRegionName(Strings.EMPTY)

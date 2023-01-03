@@ -1,7 +1,15 @@
 package com.joepap.geodataextractor.adapter.dto;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import lombok.Getter;
 
+@Getter
 public enum CategoryGroupCode implements KakaoLocalType {
     MT1("대형마트"),
     CS2("편의점"),
@@ -22,13 +30,21 @@ public enum CategoryGroupCode implements KakaoLocalType {
     HP8("병원"),
     PM9("약국");
 
-    @Getter
     private final String categoryName;
+    private static final Map<String, CategoryGroupCode> map =
+            Arrays.stream(values())
+                  .collect(Collectors.toMap(
+                          CategoryGroupCode::name, Function.identity()));
 
     @Override
     public String getCode() {
         return name();
     }
+
+    public static CategoryGroupCode from(String code) {
+        return map.get(code);
+    }
+
     CategoryGroupCode(String categoryName) {
         this.categoryName = categoryName;
     }
