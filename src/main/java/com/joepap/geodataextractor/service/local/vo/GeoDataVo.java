@@ -1,11 +1,11 @@
 package com.joepap.geodataextractor.service.local.vo;
 
-import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.logging.log4j.util.Strings;
 
-import com.google.common.collect.Lists;
+import com.joepap.geodataextractor.Constants;
 import com.joepap.geodataextractor.adapter.dto.LocalDocumentDto;
 
 import lombok.AccessLevel;
@@ -30,6 +30,7 @@ public class GeoDataVo {
     private String subCategory2;
     private String subCategory3;
     private String subCategory4;
+    private boolean isMockData;
 
     private static final String CATEGORY_NAME_DELIMITER = ">";
     private static final String[] HEADERS = {
@@ -47,7 +48,8 @@ public class GeoDataVo {
             "subCategory1",
             "subCategory2",
             "subCategory3",
-            "subCategory4"
+            "subCategory4",
+            "isMockData"
     };
 
     public static CSVFormat getCsvFormat() {
@@ -58,7 +60,10 @@ public class GeoDataVo {
 
     public static GeoDataVo from(LocalDocumentDto localDocumentDto) {
         final String[] subCategories = new String[4];
-        final String[] delimitedList = localDocumentDto.getCategoryName().split(CATEGORY_NAME_DELIMITER);
+        final String[] delimitedList = Optional.ofNullable(localDocumentDto.getCategoryName())
+                                               .map(categoryName -> categoryName.split(CATEGORY_NAME_DELIMITER))
+                                               .orElse(new String[]{});
+
 
         for (int i = 0; i < delimitedList.length && i < 4; i++) {
             subCategories[i] = delimitedList[i].trim();
@@ -82,6 +87,7 @@ public class GeoDataVo {
                 .subCategory2(subCategories[1])
                 .subCategory3(subCategories[2])
                 .subCategory4(subCategories[3])
+                .isMockData(localDocumentDto.getId() == Constants.MOCK_DATA_ID)
                 .build();
     }
 }

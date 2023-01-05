@@ -12,4 +12,5 @@ public class Constants {
     public static final double SEOUL_MAX_LONGITUDE = 127.1854;
     public static final double SEOUL_MAX_LATITUDE = 37.7020;
     public static final String CSV_EXTENSION = ".csv";
+    public static final long MOCK_DATA_ID = -1;
 }

@@ -28,4 +28,8 @@ public class LocalMetaDto {
     public boolean isAbleToSearchAllData() {
         return pageableCount >= totalCount;
     }
+
+    public int getUnsearchableDocumentCount() {
+        return totalCount - pageableCount;
+    }
 }

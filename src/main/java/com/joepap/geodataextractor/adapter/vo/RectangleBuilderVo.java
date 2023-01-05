@@ -30,25 +30,25 @@ public class RectangleBuilderVo {
                rightBottom.lon + DELIMITER + rightBottom.lat;
     }
 
-    public RectangleBuilderVo getLeftTop() {
+    public RectangleBuilderVo getLeftTopZone() {
         return new RectangleBuilderVo(
                 new Point(leftTop.lon, leftTop.lat),
                 new Point((leftTop.lon + rightBottom.lon) / 2, (leftTop.lat + rightBottom.lat) / 2));
     }
 
-    public RectangleBuilderVo getRightTop() {
+    public RectangleBuilderVo getRightTopZone() {
         return new RectangleBuilderVo(
                 new Point((leftTop.lon + rightBottom.lon) / 2, leftTop.lat),
                 new Point(rightBottom.lon, (leftTop.lat + rightBottom.lat) / 2));
     }
 
-    public RectangleBuilderVo getLeftBottom() {
+    public RectangleBuilderVo getLeftBottomZone() {
         return new RectangleBuilderVo(
                 new Point(leftTop.lon, (leftTop.lat + rightBottom.lat) / 2),
                 new Point((leftTop.lon + rightBottom.lon) / 2, rightBottom.lat));
     }
 
-    public RectangleBuilderVo getRightBottom() {
+    public RectangleBuilderVo getRightBottomZone() {
         return new RectangleBuilderVo(
                 new Point((leftTop.lon + rightBottom.lon) / 2, (leftTop.lat + rightBottom.lat) / 2),
                 new Point(rightBottom.lon, rightBottom.lat));
@@ -58,6 +58,11 @@ public class RectangleBuilderVo {
         public static Point getMiddlePoint(Point a, Point b) {
             return new Point((a.lon + b.lon) / 2, (a.lat + b.lat) / 2);
         }
+    }
+
+    public boolean isLessThanMinDegree(double minDegreeDifference) {
+        return rightBottom.lon - leftTop.lon < minDegreeDifference
+                || leftTop.lat - rightBottom.lat < minDegreeDifference;
     }
 
 }
