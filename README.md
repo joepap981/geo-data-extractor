@@ -80,7 +80,7 @@ test_key1 - inactive
 ```
 
 - create : 데이터를 생성한다.
-  - --code : 생성 대상 시설 코드. 다수로 입력가능
+  - --code : 생성 대상 시설 코드. 다수로 입력가능. 제공하지 않는 경우 모든 코드를 생성함.
   - --extractArea: 생성 범위 대상
     - KOREA : 대한민국 전체
     - SEOUL : 서울
