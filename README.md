@@ -27,6 +27,30 @@ Java로 빌드한 jar를 실행한다.
 ## 사용법
 - help : 명령어 설명
   - help {명령어} : 명령어 상세 설명
+  
+```shell
+shell:>help
+AVAILABLE COMMANDS
+
+Api Key Commands
+       register-key: KAKAO REST API키를 신규로 등록한다.
+       list-keys: 등록되어 있는 KAKAO REST API키를 조회한다.
+       activate-key: 등록되어 있는 KAKAO REST API키를 주키로 활성화한다.
+       remove-key: 등록되어 있는 KAKAO REST API키를 삭제한다.
+
+Built-In Commands
+       help: Display help about available commands
+       stacktrace: Display the full stacktrace of the last error.
+       clear: Clear the shell screen.
+       quit, exit: Exit the shell.
+       history: Display or save the history of previously run commands
+       version: Show version info
+       script: Read and execute commands from a file.
+
+Geo Data Create Commands
+       create: 위치 데이터 CSV 파일생성 명령
+       list-code: 요청 가능한 PIA 시설코드를 조회한다
+```
 
 ### Rest API Key 등록
 본 프로그램은 Kakao Local API를 호출하여 PIA 데이터를 수집한다. Kakao Local API를 사용하기 위해서는 Rest API Key를 발급 받아야 한다.
