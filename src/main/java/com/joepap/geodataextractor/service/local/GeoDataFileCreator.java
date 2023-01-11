@@ -21,6 +21,7 @@ import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchRequestDto;
 import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchResponseDto;
 import com.joepap.geodataextractor.adapter.dto.LocalDocumentDto;
 import com.joepap.geodataextractor.adapter.vo.RectangleBuilderVo;
+import com.joepap.geodataextractor.service.local.type.ExtractAreaType;
 import com.joepap.geodataextractor.service.local.vo.GeoDataVo;
 import com.joepap.geodataextractor.util.ListTransformer;
 
@@ -37,7 +38,6 @@ public class GeoDataFileCreator {
     private final KakaoLocalAdapter kakaoLocalAdapter;
 
     private static final int FLUSH_THRESHOLD = 100;
-    private static final String SEOUL = "서울";
     private static final double MIN_DEGREE_DIFFERENCE = 0.00003;
 
     private Set<Long> idSet;
@@ -53,8 +53,14 @@ public class GeoDataFileCreator {
         csvPrinter = new CSVPrinter(fileWriter, GeoDataVo.getCsvFormat());
     }
 
-    public String createGeoCsvFileForCode(CategoryGroupCode categoryGroupCode, String filePath)
+    public String createGeoCsvFileForCode(
+            ExtractAreaType extractAreaType, CategoryGroupCode categoryGroupCode, String filePath)
             throws IOException {
+        if (!KeyStorage.hasActiveKey()) {
+            throw new RuntimeException(
+                    "No active key is registered. Please register using 'register-key' "
+                    + "(use help register-key for details)");
+        }
         filePath = filePath == null ? Strings.EMPTY : filePath;
         final String fileName = filePath + '/'
                                 + categoryGroupCode
@@ -62,18 +68,25 @@ public class GeoDataFileCreator {
                                 + '_' + LocalDate.now() + Constants.CSV_EXTENSION;
         System.out.println("Creating file : " + fileName);
         init(categoryGroupCode, fileName);
-        writeCategoryData(RectangleBuilderVo.seoul());
-        flushGeoDataToCsv();
+        writeCategoryData(extractAreaType, extractAreaType.getRectangleBuilderVo());
+        flushGeoDataToCsv(extractAreaType);
         System.out.println("Created file : " + fileName);
         close();
         return fileName;
     }
 
-    private void writeCategoryData(RectangleBuilderVo searchZone) throws IOException {
+    private void writeCategoryData(
+            ExtractAreaType extractAreaType, RectangleBuilderVo searchZone) throws IOException {
         final LocalCategorySearchRequestDto requestDto = LocalCategorySearchRequestDto.from(
                 categoryGroupCode, searchZone, 1, Constants.MAX_PAGE_SIZE);
-        final LocalCategorySearchResponseDto responseDto =
-                kakaoLocalAdapter.searchLocalByCategory(KeyStorage.get(), requestDto);
+
+        LocalCategorySearchResponseDto responseDto;
+        try {
+            responseDto = kakaoLocalAdapter.searchLocalByCategory(KeyStorage.get(), requestDto);
+        } catch (Exception e) {
+            log.error("Failed request with {}", KeyStorage.get(), e);
+            responseDto = retryWithNewKey(requestDto);
+        }
 
         if (responseDto.getMeta().getTotalCount() == 0) {
             System.out.println("[" + categoryGroupCode + "] No data found in zone : "
@@ -91,12 +104,12 @@ public class GeoDataFileCreator {
                     searchZone.getLeftTopZone(), searchZone.getRightTopZone(),
                     searchZone.getLeftBottomZone(), searchZone.getRightBottomZone());
             for (RectangleBuilderVo newZone : newZones) {
-                writeCategoryData(newZone);
+                writeCategoryData(extractAreaType, newZone);
             }
         }
 
         if (documents.size() > FLUSH_THRESHOLD) {
-            flushGeoDataToCsv();
+            flushGeoDataToCsv(extractAreaType);
         }
     }
 
@@ -133,9 +146,10 @@ public class GeoDataFileCreator {
         System.out.println(message);
     }
 
-    private void flushGeoDataToCsv() throws IOException {
+    private void flushGeoDataToCsv(ExtractAreaType extractAreaType) throws IOException {
         ListTransformer.transform(documents, GeoDataVo::from).stream()
-                       .filter(geoDataVo -> geoDataVo.getCity().equals(SEOUL))
+                       .filter(geoDataVo -> extractAreaType.getAreaName().isEmpty()
+                                            || geoDataVo.getCity().equals(extractAreaType.getAreaName()))
                        .forEach(geoDataVo -> {
                            try {
                                 csvPrinter.printRecord(
@@ -170,6 +184,19 @@ public class GeoDataFileCreator {
             documents.add(localDocumentDto);
             idSet.add(localDocumentDto.getId());
         }
+    }
+
+    private LocalCategorySearchResponseDto retryWithNewKey(LocalCategorySearchRequestDto requestDto) {
+        KeyStorage.deactivateKey(KeyStorage.get());
+        while(KeyStorage.hasActiveKey()) {
+            try {
+                return kakaoLocalAdapter.searchLocalByCategory(KeyStorage.get(), requestDto);
+            } catch (Exception e) {
+                log.error("Failed request with key : {}", KeyStorage.get() , e);
+                KeyStorage.deactivateKey(KeyStorage.get());
+            }
+        }
+        throw new RuntimeException("No active keys to continue extraction.");
     }
 
     @PreDestroy

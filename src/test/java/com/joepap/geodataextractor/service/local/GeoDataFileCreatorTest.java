@@ -19,6 +19,7 @@ import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchResponseDto;
 import com.joepap.geodataextractor.adapter.dto.LocalDocumentDto;
 import com.joepap.geodataextractor.adapter.dto.LocalMetaDto;
 import com.joepap.geodataextractor.adapter.vo.RectangleBuilderVo;
+import com.joepap.geodataextractor.service.local.type.ExtractAreaType;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -53,7 +54,7 @@ class GeoDataFileCreatorTest {
                                                       .pageableCount(15)
                                                       .totalCount(15)
                                                       .build()).build());
-        target.createGeoCsvFileForCode(CATEGORY_GROUP_CODE, FILE_PATH);
+        target.createGeoCsvFileForCode(ExtractAreaType.KOREA, CATEGORY_GROUP_CODE, FILE_PATH);
         verify(geoDataRetrieveService, times(0)).retrieveRestOfLocalDocuments(any(), any());
         verify(kakaoLocalAdapter, times(1)).searchLocalByCategory(anyString(), any());
     }
@@ -70,7 +71,7 @@ class GeoDataFileCreatorTest {
                                                                             .pageableCount(45)
                                                                             .totalCount(45)
                                                                             .build()).build());
-        target.createGeoCsvFileForCode(CATEGORY_GROUP_CODE, FILE_PATH);
+        target.createGeoCsvFileForCode(ExtractAreaType.KOREA, CATEGORY_GROUP_CODE, FILE_PATH);
         verify(geoDataRetrieveService, times(1)).retrieveRestOfLocalDocuments(any(), any());
         verify(kakaoLocalAdapter, times(1)).searchLocalByCategory(anyString(), any());
     }

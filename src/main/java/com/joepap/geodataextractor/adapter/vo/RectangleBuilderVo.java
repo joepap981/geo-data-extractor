@@ -15,12 +15,6 @@ public class RectangleBuilderVo {
 
     private static final String DELIMITER = ",";
 
-    public static RectangleBuilderVo seoul() {
-        return new RectangleBuilderVo(
-                new Point(Constants.SEOUL_MIN_LONGITUDE, Constants.SEOUL_MAX_LATITUDE),
-                new Point(Constants.SEOUL_MAX_LONGITUDE, Constants.SEOUL_MIN_LATITUDE)
-        );
-    }
     public static RectangleBuilderVo of(Point leftTop, Point rightBottom) {
         return new RectangleBuilderVo(leftTop, rightBottom);
     }
@@ -64,5 +58,4 @@ public class RectangleBuilderVo {
         return rightBottom.lon - leftTop.lon < minDegreeDifference
                 || leftTop.lat - rightBottom.lat < minDegreeDifference;
     }
-
 }
