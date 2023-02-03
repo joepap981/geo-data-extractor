@@ -1,6 +1,6 @@
 # geo-data-extractor
 ## 개요
-[Kakao Local API](https://developers.kakao.com/docs/latest/ko/local/common)를 활용하여 대한민국 주요 시설 PIA 정보를 수집하여 CSV 파일로 출력한다.
+[Kakao Local API](https://developers.kakao.com/docs/latest/ko/local/common)를 활용하여 대한민국 주요 시설 POI 정보를 수집하여 CSV 파일로 출력한다.
 
 ## Prerequisite
 Java 17
