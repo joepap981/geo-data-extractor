@@ -14,7 +14,7 @@ import lombok.ToString;
 @AllArgsConstructor@NoArgsConstructor
 public class LocalMetaDto {
     @JsonProperty("same_name")
-    private String sameName;
+    private RegionInfoDto sameName;
     @JsonProperty("pageable_count")
     private Integer pageableCount;
     @JsonProperty("total_count")

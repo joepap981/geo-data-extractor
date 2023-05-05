@@ -13,7 +13,7 @@ import org.springframework.util.StopWatch;
 
 import com.google.common.collect.Lists;
 import com.joepap.geodataextractor.adapter.dto.CategoryGroupCode;
-import com.joepap.geodataextractor.service.local.GeoDataFileCreator;
+import com.joepap.geodataextractor.service.local.AbstractGeoDataGenerateService;
 import com.joepap.geodataextractor.service.local.type.ExtractAreaType;
 
 import lombok.RequiredArgsConstructor;
@@ -67,8 +67,12 @@ public class GeoDataCreateCommands {
 
         final List<String> fileNames = Lists.newArrayList();
         for (CategoryGroupCode categoryGroupCode : categoryGroupCodes) {
-            final GeoDataFileCreator geoDataFileCreator = applicationContext.getBean(GeoDataFileCreator.class);
-            final String fileName = geoDataFileCreator.createGeoCsvFileForCode(
+            if (categoryGroupCode.getClassType() == null) {
+                continue;
+            }
+            final AbstractGeoDataGenerateService geoDataFileGenerateService = applicationContext.getBean(
+                    categoryGroupCode.getClassType());
+            final String fileName = geoDataFileGenerateService.createGeoCsvFileForCode(
                     extractArea, categoryGroupCode, outputPath);
             fileNames.add(fileName);
         }

@@ -8,21 +8,17 @@ import java.util.Set;
 
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.joepap.geodataextractor.Constants;
-import com.joepap.geodataextractor.adapter.KakaoLocalAdapter;
 import com.joepap.geodataextractor.adapter.dto.CategoryGroupCode;
-import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchRequestDto;
 import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchResponseDto;
 import com.joepap.geodataextractor.adapter.dto.LocalDocumentDto;
 import com.joepap.geodataextractor.adapter.vo.RectangleBuilderVo;
 import com.joepap.geodataextractor.service.local.type.ExtractAreaType;
 import com.joepap.geodataextractor.service.local.vo.GeoDataVo;
+import com.joepap.geodataextractor.service.local.vo.LocalSearchRequestVo;
 import com.joepap.geodataextractor.util.ListTransformer;
 
 import jakarta.annotation.PreDestroy;
@@ -30,12 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Service
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @RequiredArgsConstructor
-public class GeoDataFileCreator {
-    private final GeoDataRetrieveService geoDataRetrieveService;
-    private final KakaoLocalAdapter kakaoLocalAdapter;
+public abstract class AbstractGeoDataGenerateService {
 
     private static final int FLUSH_THRESHOLD = 100;
     private static final double MIN_DEGREE_DIFFERENCE = 0.00003;
@@ -44,6 +36,8 @@ public class GeoDataFileCreator {
     private List<LocalDocumentDto> documents;
     private CSVPrinter csvPrinter;
     private CategoryGroupCode categoryGroupCode;
+
+    abstract LocalCategorySearchResponseDto searchLocal(String key, LocalSearchRequestVo requestVo);
 
     private void init(CategoryGroupCode categoryGroupCode, String fileName) throws IOException {
         this.categoryGroupCode = categoryGroupCode;
@@ -64,7 +58,7 @@ public class GeoDataFileCreator {
         filePath = filePath == null ? Strings.EMPTY : filePath;
         final String fileName = filePath + '/'
                                 + categoryGroupCode
-                                + '_'+ categoryGroupCode.getCategoryName()
+                                + '_' + categoryGroupCode.getCategoryName()
                                 + '_' + LocalDate.now() + Constants.CSV_EXTENSION;
         System.out.println("Creating file : " + fileName);
         init(categoryGroupCode, fileName);
@@ -77,15 +71,15 @@ public class GeoDataFileCreator {
 
     private void writeCategoryData(
             ExtractAreaType extractAreaType, RectangleBuilderVo searchZone) throws IOException {
-        final LocalCategorySearchRequestDto requestDto = LocalCategorySearchRequestDto.from(
+        final LocalSearchRequestVo requestVo = LocalSearchRequestVo.from(
                 categoryGroupCode, searchZone, 1, Constants.MAX_PAGE_SIZE);
 
         LocalCategorySearchResponseDto responseDto;
         try {
-            responseDto = kakaoLocalAdapter.searchLocalByCategory(KeyStorage.get(), requestDto);
+            responseDto = searchLocal(KeyStorage.get(), requestVo);
         } catch (Exception e) {
             log.error("Failed request with {}", KeyStorage.get(), e);
-            responseDto = retryWithNewKey(requestDto);
+            responseDto = retryWithNewKey(requestVo);
         }
 
         if (responseDto.getMeta().getTotalCount() == 0) {
@@ -118,7 +112,7 @@ public class GeoDataFileCreator {
                            + searchZone.getRectString());
         addAll(responseDto.getDocuments());
         if (!responseDto.getMeta().isEnd()) {
-            final List<LocalDocumentDto> restOfDocuments = geoDataRetrieveService.retrieveRestOfLocalDocuments(
+            final List<LocalDocumentDto> restOfDocuments = retrieveRestOfLocalDocuments(
                     categoryGroupCode, searchZone);
             addAll(restOfDocuments);
         }
@@ -152,27 +146,27 @@ public class GeoDataFileCreator {
                                             || geoDataVo.getCity().equals(extractAreaType.getAreaName()))
                        .forEach(geoDataVo -> {
                            try {
-                                csvPrinter.printRecord(
-                                    geoDataVo.getId(),
-                                    geoDataVo.getCategoryGroupCode(),
-                                    geoDataVo.getCategoryGroupName(),
-                                    geoDataVo.getPlaceName(),
-                                    geoDataVo.getCity(),
-                                    geoDataVo.getAddress(),
-                                    geoDataVo.getRoadAddress(),
-                                    geoDataVo.getAdministrativeRegionName(),
-                                    geoDataVo.getAdministrativeRegionCode(),
-                                    geoDataVo.getLongitude(),
-                                    geoDataVo.getLatitude(),
-                                    geoDataVo.getSubCategory1(),
-                                    geoDataVo.getSubCategory2(),
-                                    geoDataVo.getSubCategory3(),
-                                    geoDataVo.getSubCategory4(),
-                                    geoDataVo.isMockData());
+                               csvPrinter.printRecord(
+                                       geoDataVo.getId(),
+                                       geoDataVo.getCategoryGroupCode(),
+                                       geoDataVo.getCategoryGroupName(),
+                                       geoDataVo.getPlaceName(),
+                                       geoDataVo.getCity(),
+                                       geoDataVo.getAddress(),
+                                       geoDataVo.getRoadAddress(),
+                                       geoDataVo.getAdministrativeRegionName(),
+                                       geoDataVo.getAdministrativeRegionCode(),
+                                       geoDataVo.getLongitude(),
+                                       geoDataVo.getLatitude(),
+                                       geoDataVo.getSubCategory1(),
+                                       geoDataVo.getSubCategory2(),
+                                       geoDataVo.getSubCategory3(),
+                                       geoDataVo.getSubCategory4(),
+                                       geoDataVo.isMockData());
                            } catch (IOException e) {
                                throw new RuntimeException(e);
                            }
-        });
+                       });
         documents.clear();
     }
 
@@ -186,11 +180,11 @@ public class GeoDataFileCreator {
         }
     }
 
-    private LocalCategorySearchResponseDto retryWithNewKey(LocalCategorySearchRequestDto requestDto) {
+    private LocalCategorySearchResponseDto retryWithNewKey(LocalSearchRequestVo requestVo) {
         KeyStorage.deactivateKey(KeyStorage.get());
         while(KeyStorage.hasActiveKey()) {
             try {
-                return kakaoLocalAdapter.searchLocalByCategory(KeyStorage.get(), requestDto);
+                return searchLocal(KeyStorage.get(), requestVo);
             } catch (Exception e) {
                 log.error("Failed request with key : {}", KeyStorage.get() , e);
                 KeyStorage.deactivateKey(KeyStorage.get());
@@ -199,6 +193,24 @@ public class GeoDataFileCreator {
         throw new RuntimeException("No active keys to continue extraction.");
     }
 
+
+
+    private List<LocalDocumentDto> retrieveRestOfLocalDocuments(
+            CategoryGroupCode categoryGroupCode, RectangleBuilderVo rectangleBuilderVo) {
+        final List<LocalDocumentDto> localDocuments = Lists.newArrayList();
+        for (int i = 2; i <= Constants.MAX_TOTAL_PAGE; i++) {
+            final LocalSearchRequestVo requestVo = LocalSearchRequestVo.from(
+                    categoryGroupCode, rectangleBuilderVo, i, Constants.MAX_PAGE_SIZE);
+            final LocalCategorySearchResponseDto responseDto = searchLocal(
+                    KeyStorage.get(), requestVo);
+
+            localDocuments.addAll(responseDto.getDocuments());
+            if (responseDto.getMeta().isEnd()) {
+                break;
+            }
+        }
+        return localDocuments;
+    }
     @PreDestroy
     public void close() throws IOException {
         idSet.clear();

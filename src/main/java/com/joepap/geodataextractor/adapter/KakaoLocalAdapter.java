@@ -9,6 +9,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchRequestDto;
 import com.joepap.geodataextractor.adapter.dto.LocalCategorySearchResponseDto;
+import com.joepap.geodataextractor.adapter.dto.LocalKeywordSearchRequestDto;
 import com.joepap.geodataextractor.adapter.util.MapperUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,20 @@ public class KakaoLocalAdapter extends AbstractAdapter {
     private static final String BASE_URI = "https://dapi.kakao.com";
     private static final String KEY_HEADER_PREFIX = "KakaoAK ";
     private static final String SEARCH_BY_CATEGORY_URI = "/v2/local/search/category.json";
+    private static final String SEARCH_BY_KEYWORD_URI = "/v2/local/search/keyword.json";
 
     public LocalCategorySearchResponseDto searchLocalByCategory(
             String apiKey, LocalCategorySearchRequestDto requestDto) {
         final String uri = BASE_URI + SEARCH_BY_CATEGORY_URI;
+        final MultiValueMap<String, String> parameter = new LinkedMultiValueMap<>();
+        parameter.setAll(MapperUtil.toStringMap(requestDto));
+        return get(uri, new ParameterizedTypeReference<>() {},
+                   createBasicAuthHeaders(apiKey), parameter);
+    }
+
+    public LocalCategorySearchResponseDto searchLocalByKeyword(
+            String apiKey, LocalKeywordSearchRequestDto requestDto) {
+        final String uri = BASE_URI + SEARCH_BY_KEYWORD_URI;
         final MultiValueMap<String, String> parameter = new LinkedMultiValueMap<>();
         parameter.setAll(MapperUtil.toStringMap(requestDto));
         return get(uri, new ParameterizedTypeReference<>() {},
